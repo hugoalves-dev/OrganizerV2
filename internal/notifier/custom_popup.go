@@ -37,12 +37,14 @@ func newCustomPopupLauncher(executable string, handler *windowsNotificationActio
 }
 func (l *customPopupLauncher) Close() { l.once.Do(func(){ close(l.closed) }) }
 func (l *customPopupLauncher) Show(event notificationEvent, cfg config.NotificationConfig, shortcuts []resolvedShortcut) error {
+    select { case <-l.closed: return fmt.Errorf("popup launcher is closing"); default: }
     select {
     case <-l.closed: return fmt.Errorf("popup launcher is closing")
     case l.slots <- struct{}{}:
     default: return fmt.Errorf("popup capacity reached; using native notification")
     }
     defer func(){<-l.slots}()
+    select { case <-l.closed: return fmt.Errorf("popup launcher is closing"); default: }
 
     // Helper is installed next to the watcher executable. It has its own
     // Go module, build and license policy. Never search PATH for arbitrary

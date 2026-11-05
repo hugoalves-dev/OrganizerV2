@@ -136,11 +136,13 @@ Global flags: `--config <path>`, `--log-level <level>`
 
 ## Notifications
 
-Custom Windows notifications use the separate `organizer-popup.exe` Wails v3 helper. Add it next to `organizer.exe` or the watcher falls back to its original native toast. By default `notifications.provider` is `custom` (including old YAML); `provider: native` always uses the old notifier. The helper uses `eaxum/wails-dragout` for native copy-only file drag-out; it does not delete the source after a drop. The requested Move/Copy/Link modifier negotiation is not yet supported. Linux retains its `notify-send` fallback. See [integration, manual checks, build and licensing](docs/issue-17-custom-popup.md) and [third-party notices](THIRD_PARTY_NOTICES.md).
+Custom Windows notifications use the separate `organizer-popup.exe` Wails v3 helper. Add it next to `organizer.exe` or the watcher falls back to its original native toast. By default `notifications.provider` is `custom` (including old YAML); `provider: native` always uses the old notifier. The helper uses `eaxum/wails-dragout` for native copy-only file drag-out; it does not delete the source after a drop. The requested Move/Copy/Link modifier negotiation is not yet supported. Linux amd64 can use the **experimental** GTK3/WebKit2GTK 4.1 helper (built with `-tags gtk3`) on X11 or Wayland, but native drag-out remains unverified until separately tested on each desktop; when unavailable the notifier falls back to `notify-send`. See [integration and build](docs/issue-17-custom-popup.md), [acceptance matrix](docs/issue-17-acceptance.md), [license audit](docs/issue-17-license-audit.md) and [third-party notices](THIRD_PARTY_NOTICES.md).
 
 ### Linux
 
-Notifications are delivered via `notify-send`. Install it with your package manager:
+By default the organizer tries the optional GTK3 custom helper on an active graphical session, then falls back to `notify-send`. Only Linux amd64 helper artifacts are currently built; other architectures stay native. Install dependencies compatible with the helper build: `libgtk-3-0` and `libwebkit2gtk-4.1-0` (distro names vary). Desktop X11/Wayland drag-out is **experimental**, not certified. Build details and the manual test matrix are documented in `docs/issue-17-custom-popup.md` and `docs/issue-17-acceptance.md`.
+
+Native fallback notifications are delivered via `notify-send`. Install it with your package manager:
 
 ```bash
 # Debian/Ubuntu
@@ -161,7 +163,7 @@ The **Open Location** action opens the folder via `xdg-open`. Linux notification
 
 ### Windows
 
-Each organized file produces a native Windows toast using the same interaction model as the original Python version.
+Each organized file produces the custom popup when its optional helper is available, otherwise the original Windows toast. Both use the existing action handler and event registry.
 
 | Interaction | Description |
 |---|---|
@@ -235,4 +237,4 @@ Place a shortcut to `organizer.exe start` in:
 
 ## License
 
-Original OrganizerV2 source is MIT — see [LICENSE](LICENSE). The optional Wails popup links AGPL-3.0-licensed `eaxum/wails-dragout`. Builds distributing that helper must meet applicable AGPL conditions for the combined work, including license notices and Corresponding Source. Choosing the native provider at runtime does not remove AGPL code from the helper. See [LICENSES](LICENSES), [third-party notices](THIRD_PARTY_NOTICES.md) and [integration guidance](docs/issue-17-custom-popup.md).
+Original OrganizerV2 source is MIT — see [LICENSE](LICENSE). The optional Wails popup links AGPL-3.0-licensed `eaxum/wails-dragout`. Builds distributing that helper must meet applicable AGPL conditions for the combined work, including license notices and Corresponding Source. Choosing the native provider at runtime does not remove AGPL code from the helper. See [LICENSES](LICENSES), [third-party notices](THIRD_PARTY_NOTICES.md), [technical license audit](docs/issue-17-license-audit.md) and [integration guidance](docs/issue-17-custom-popup.md).

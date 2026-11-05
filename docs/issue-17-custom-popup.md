@@ -30,7 +30,7 @@ The upstream native drag-out backend uses **GTK3**, while modern Wails v3 defaul
 ```bash
 cd cmd/organizer-popup
 go mod tidy
-go run github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.32 generate bindings -d ./assets/bindings
+go run -tags gtk3 github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.32 generate bindings -d ./assets/bindings
 CGO_ENABLED=1 go test -tags gtk3 ./...
 CGO_ENABLED=1 go build -trimpath -tags 'gtk3 production' -o ../../organizer-popup .
 ```

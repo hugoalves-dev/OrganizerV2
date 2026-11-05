@@ -9,7 +9,7 @@ import (
   "time"
 )
 
-func (s *PopupService) Ready() error {return s.request("/ready",nil)}
+func (s *PopupService) Ready() error {s.Place();return s.request("/ready",nil)}
 func (s *PopupService) Action(action, selection string) error {
   if action!="open_location" && action!="open_file" && action!="confirm" {
     return errors.New("unsupported action")

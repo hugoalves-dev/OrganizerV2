@@ -7,7 +7,6 @@ import (
 	"log"
 	"log/slog"
 	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 

@@ -27,6 +27,9 @@ type linuxNotifier struct {
 }
 
 func newPlatform(cfg config.NotificationConfig) Notifier {
+    if cfg.Provider == "custom" {
+        log.Println("[notifier] native drag-out helper is not verified on Linux; using notify-send fallback (X11/Wayland)")
+    }
 	n := &linuxNotifier{cfg: cfg}
 	_, err := exec.LookPath("notify-send")
 	n.notifySendAvail = err == nil

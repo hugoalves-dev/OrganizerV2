@@ -21,6 +21,7 @@ type windowsNotifier struct {
 	handler    *windowsNotificationActionHandler
 	files      fileActionService
 	push       toastPusher
+	popup *customPopupLauncher
 	closeOnce  sync.Once
 	closeErr   error
 }
@@ -54,6 +55,7 @@ func newPlatform(cfg config.NotificationConfig) Notifier {
 	installWindowsActivationHandler(handler)
 
 	return &windowsNotifier{
+        popup: newCustomPopupLauncher(executable,handler),
 		cfg:        cfg,
 		executable: executable,
 		registry:   registry,
@@ -87,6 +89,13 @@ func (n *windowsNotifier) deliver(event FileEvent) {
 	if n.shortcuts != nil {
 		shortcuts = n.shortcuts.All()
 	}
+    if n.cfg.Provider == "custom" && n.popup != nil {
+        if err := n.popup.Show(registered, n.cfg, shortcuts); err == nil {
+            return
+        } else {
+            log.Printf("[notifier] custom popup failed; falling back to native: %v", err)
+        }
+    }
 	notification := buildWindowsToast(registered, n.cfg, shortcuts, n.executable)
 	if n.push == nil {
 		n.registry.Remove(registered.ID)
@@ -101,6 +110,7 @@ func (n *windowsNotifier) deliver(event FileEvent) {
 
 func (n *windowsNotifier) Close() error {
 	n.closeOnce.Do(func() {
+        if n.popup != nil { n.popup.Close() }
 		clearWindowsActivationHandler(n.handler)
 		if n.registry != nil {
 			n.closeErr = n.registry.Close()

@@ -98,11 +98,83 @@ jobs:
           mkdir -p dist
           go build -trimpath -ldflags="-s -w" -o "dist/${{ matrix.binary_name }}" ./cmd/organizer
 
+      # The optional AGPL Wails helper has its own Go module and requires CGO.
+      # Keep it out of the headless 1.25 / CGO_ENABLED=0 watcher build.
+      - uses: actions/setup-go@v5
+        if: matrix.goos == 'windows'
+        with:
+          go-version-file: cmd/organizer-popup/go.mod
+          cache: false
+
+      - name: Build Wails popup helper (Windows)
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          Push-Location cmd/organizer-popup
+          go mod tidy
+          if ($LASTEXITCODE -ne 0) { throw 'popup dependencies failed' }
+          go run github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.32 generate bindings -d ./assets/bindings
+          if ($LASTEXITCODE -ne 0) { throw 'Wails bindings failed' }
+          go test ./...
+          if ($LASTEXITCODE -ne 0) { throw 'popup tests failed' }
+          go build -trimpath -tags production -o ../../dist/organizer-popup.exe .
+          if ($LASTEXITCODE -ne 0) { throw 'popup build failed' }
+          Pop-Location
+
+      - name: Package Windows popup with required license notices
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist/licenses | Out-Null
+          Copy-Item LICENSE dist/licenses/MIT.txt
+          Copy-Item THIRD_PARTY_NOTICES.md dist/licenses/
+          Copy-Item LICENSES/* dist/licenses/
+          Compress-Archive -Path dist/organizer-windows-amd64.exe,dist/organizer-popup.exe,dist/licenses -DestinationPath dist/organizer-windows-amd64-bundle.zip
+
+      - name: Install GTK3 and WebKitGTK build dependencies
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - uses: actions/setup-go@v5
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        with:
+          go-version-file: cmd/organizer-popup/go.mod
+          cache: false
+
+      - name: Build experimental Wails popup helper (Linux GTK3)
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          cd cmd/organizer-popup
+          go mod tidy
+          go run -tags gtk3 github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.32 generate bindings -d ./assets/bindings
+          go test -tags gtk3 ./...
+          go build -trimpath -tags "gtk3 production" -o ../../dist/organizer-popup .
+
+      - name: Package optional Linux popup and all license notices
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        run: |
+          mkdir -p dist/licenses
+          cp LICENSE dist/licenses/MIT.txt
+          cp LICENSES/* dist/licenses/
+          cp THIRD_PARTY_NOTICES.md dist/licenses/
+          (cd dist && tar -czf organizer-linux-amd64-bundle.tar.gz organizer-linux-amd64 organizer-popup licenses)
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: dist/${{ matrix.binary_name }}
+          path: |
+            dist/${{ matrix.binary_name }}
+            dist/organizer-popup.exe
+            dist/organizer-popup
+            dist/organizer-windows-amd64-bundle.zip
+            dist/organizer-linux-amd64-bundle.tar.gz
           if-no-files-found: error
 
   release:

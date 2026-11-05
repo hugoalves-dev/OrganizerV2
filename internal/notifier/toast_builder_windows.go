@@ -71,14 +71,6 @@ func buildWindowsToast(event notificationEvent, cfg config.NotificationConfig, s
 	return notification
 }
 
-func currentDestinationLabel(directory string) string {
-	name := filepath.Base(filepath.Clean(directory))
-	if name == "" || name == "." {
-		name = filepath.Clean(directory)
-	}
-	return name + " (current)"
-}
-
 func (n windowsToast) XML() (string, error) {
 	var output bytes.Buffer
 	encoder := xml.NewEncoder(&output)

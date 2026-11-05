@@ -5,6 +5,7 @@ import (
     "encoding/json"
     "flag"
     "log"
+    "net"
     "os"
     "path/filepath"
 
@@ -30,6 +31,10 @@ func main(){
     if !filepath.IsAbs(*file)||*event==""||*callback==""||*token==""||*duration<=0||*duration>3600 {
         log.Print("popup requires a valid OrganizerV2 notification")
         os.Exit(2)
+    }
+    host,_,addressErr:=net.SplitHostPort(*callback)
+    if addressErr!=nil || host!="127.0.0.1" {
+        log.Fatal("popup callbacks must use an ephemeral IPv4 loopback endpoint")
     }
     var choices []PopupChoice
     if err:=json.Unmarshal([]byte(*choicesRaw),&choices);err!=nil{log.Fatal(err)}

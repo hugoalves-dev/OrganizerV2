@@ -95,7 +95,7 @@ jobs:
         run: |
           Push-Location cmd/organizer-popup
           go mod tidy
-          go run github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.32 generate bindings -d ./assets/bindings
+          go run github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.32 generate bindings -b -d ./assets/bindings
           go test ./...
           if ($LASTEXITCODE -ne 0) { throw 'popup tests failed' }
           go build -tags production -ldflags="-H windowsgui" -o ../../organizer-popup.exe .
@@ -135,7 +135,7 @@ jobs:
         run: |
           cd cmd/organizer-popup
           go mod tidy
-          go run -tags gtk3 github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.32 generate bindings -d ./assets/bindings
+          go run -tags gtk3 github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.32 generate bindings -b -d ./assets/bindings
           go test -tags gtk3 ./...
           go build -trimpath -tags "gtk3 production" -o ../../organizer-popup .
 

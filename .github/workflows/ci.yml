@@ -123,6 +123,16 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'popup build failed' }
           Pop-Location
 
+      - name: Package Windows popup with required license notices
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist/licenses | Out-Null
+          Copy-Item LICENSE dist/licenses/MIT.txt
+          Copy-Item THIRD_PARTY_NOTICES.md dist/licenses/
+          Copy-Item LICENSES/* dist/licenses/
+          Compress-Archive -Path dist/organizer-windows-amd64.exe,dist/organizer-popup.exe,dist/licenses -DestinationPath dist/organizer-windows-amd64-bundle.zip
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
@@ -130,6 +140,7 @@ jobs:
           path: |
             dist/${{ matrix.binary_name }}
             dist/organizer-popup.exe
+            dist/organizer-windows-amd64-bundle.zip
           if-no-files-found: error
 
   release:

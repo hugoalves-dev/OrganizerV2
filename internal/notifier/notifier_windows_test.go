@@ -175,3 +175,53 @@ func TestWindowsNotifierConcurrentDeliveriesKeepDistinctEvents(t *testing.T) {
 		}
 	}
 }
+
+type fakePopupPresenter struct {
+  calls int
+  err error
+}
+func (p *fakePopupPresenter) Show(_ notificationEvent, _ config.NotificationConfig, _ []resolvedShortcut) error {
+  p.calls++
+  return p.err
+}
+func (p *fakePopupPresenter) Close() {}
+
+func TestCustomPopupSuccessNeverPushesNativeToast(t *testing.T) {
+  pushes := 0
+  n, _ := newWindowsNotifierFixture(t, func(*windowsToast) error { pushes++;return nil })
+  n.cfg.Provider = "custom"
+  popup := &fakePopupPresenter{}
+  n.popup = popup
+  n.deliver(FileEvent{Destination: filepath.Join(t.TempDir(),"report_日本語.xml"), Category:"Others"})
+  if popup.calls != 1 || pushes != 0 {
+    t.Fatalf("popup calls=%d, native pushes=%d; want 1 and 0",popup.calls,pushes)
+  }
+  n.registry.mu.Lock()
+  count := len(n.registry.events)
+  n.registry.mu.Unlock()
+  if count != 0 { t.Fatalf("completed popup left %d claimable events", count) }
+}
+
+func TestCustomPopupStartupFailureFallsBackOnce(t *testing.T) {
+  pushes := 0
+  n, _ := newWindowsNotifierFixture(t, func(*windowsToast) error { pushes++;return nil })
+  n.cfg.Provider = "custom"
+  popup := &fakePopupPresenter{err: errors.New("helper did not become ready")}
+  n.popup = popup
+  n.deliver(FileEvent{Destination: filepath.Join(t.TempDir(),"report.xml"), Category:"Others"})
+  if popup.calls != 1 || pushes != 1 {
+    t.Fatalf("popup calls=%d, native pushes=%d; want 1 and 1",popup.calls,pushes)
+  }
+}
+
+func TestNativeProviderNeverLaunchesPopup(t *testing.T) {
+  pushes := 0
+  n, _ := newWindowsNotifierFixture(t, func(*windowsToast) error { pushes++;return nil })
+  n.cfg.Provider = "native"
+  popup := &fakePopupPresenter{}
+  n.popup = popup
+  n.deliver(FileEvent{Destination: filepath.Join(t.TempDir(),"report.xml"), Category:"Others"})
+  if popup.calls != 0 || pushes != 1 {
+    t.Fatalf("popup calls=%d, native pushes=%d; want 0 and 1",popup.calls,pushes)
+  }
+}

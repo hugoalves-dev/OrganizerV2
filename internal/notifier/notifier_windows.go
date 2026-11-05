@@ -13,6 +13,12 @@ import (
 
 type toastPusher func(*windowsToast) error
 
+// Allows provider-routing tests without launching Wails/WebView2.
+type popupPresenter interface {
+    Show(notificationEvent, config.NotificationConfig, []resolvedShortcut) error
+    Close()
+}
+
 type windowsNotifier struct {
 	cfg        config.NotificationConfig
 	executable string
@@ -21,7 +27,7 @@ type windowsNotifier struct {
 	handler    *windowsNotificationActionHandler
 	files      fileActionService
 	push       toastPusher
-	popup *customPopupLauncher
+	popup popupPresenter
 	closeOnce  sync.Once
 	closeErr   error
 }
@@ -91,6 +97,9 @@ func (n *windowsNotifier) deliver(event FileEvent) {
 	}
     if n.cfg.Provider == "custom" && n.popup != nil {
         if err := n.popup.Show(registered, n.cfg, shortcuts); err == nil {
+            // The popup is finished (dismissed, action, or timeout); unlike
+            // a native toast, it can no longer be activated.
+            n.registry.Remove(registered.ID)
             return
         } else {
             log.Printf("[notifier] custom popup failed; falling back to native: %v", err)

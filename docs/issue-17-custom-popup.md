@@ -16,7 +16,7 @@ cd cmd/organizer-popup
 # Requires Go 1.27.2+, MinGW GCC, WebView2, and Wails 3 beta.32.
 go mod tidy
 go run github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.32 generate bindings -d ./assets/bindings
-go build -trimpath -tags production -o ../../dist/organizer-popup.exe .
+go build -trimpath -tags production -ldflags="-H windowsgui" -o ../../dist/organizer-popup.exe .
 cd ../..
 # Keep organizer.exe and organizer-popup.exe side-by-side.
 ```
@@ -57,3 +57,12 @@ The requirement added in issue comment #6646734242 (default Move, Ctrl Copy, Alt
 ## Licensing
 
 Original OrganizerV2 sources remain MIT. The optional Wails helper links `eaxum/wails-dragout`, licensed AGPL-3.0. Distributing that helper requires meeting applicable obligations for the combined work, including attribution, preserving exact license text, notices and corresponding source. Switching to the native provider in YAML does **not** remove AGPL from a linked binary. See `LICENSES/AGPL-3.0.txt`, `LICENSES/AGPL-NOTICE.txt` and `THIRD_PARTY_NOTICES.md`. The adapted drag-rs MIT license is also included at `LICENSES/LICENSE.drag-rs`. See the [technical license audit](issue-17-license-audit.md) for outstanding source-offer and dependency-inventory work; obtain formal legal review before distributing combined artifacts.
+
+## Issue #19: popup presentation and fallback
+
+- The Windows helper is linked as a GUI-subsystem PE executable (`-H windowsgui`), so it does not create a console window. Both CI and tag releases verify the PE subsystem in PowerShell.
+- The helper creates a hidden WebView, renders all UI controls from Wails bindings, positions it within the primary monitor's **logical WorkArea**, then shows it and sends authenticated READY.
+- The launcher only falls back to a native toast for **pre-READY** failures (missing helper, launch error, early exit, timeout, capacity). Once READY has been received, normal window closure or any subsequent helper exit does not generate a duplicate notification.
+- Wails bindings and embedded frontend routes are checked in helper tests; generate bindings before `go test ./...` in the helper module.
+- The custom popup uses the existing shortcut IDs and native file-action handler, and releases its event when the popup process ends. The watcher remains asynchronous.
+- **Manual Windows 11 acceptance is still required** for physical drag-out, DPI/multi-monitor window placement, simultaneous downloads and actual click/move actions. Unit tests and CI cannot certify these desktop interactions.

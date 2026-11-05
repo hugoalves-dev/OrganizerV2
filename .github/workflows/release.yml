@@ -96,7 +96,14 @@ jobs:
           Push-Location cmd/organizer-popup
           go mod tidy
           go run github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.32 generate bindings -d ./assets/bindings
-          go build -tags production -o ../../organizer-popup.exe .
+          go test ./...
+          if ($LASTEXITCODE -ne 0) { throw 'popup tests failed' }
+          go build -tags production -ldflags="-H windowsgui" -o ../../organizer-popup.exe .
+          if ($LASTEXITCODE -ne 0) { throw 'popup build failed' }
+          $binary = [IO.File]::ReadAllBytes('../../organizer-popup.exe')
+          $peOffset = [BitConverter]::ToInt32($binary, 0x3c)
+          $subsystem = [BitConverter]::ToUInt16($binary, $peOffset + 0x5c)
+          if ($subsystem -ne 2) { throw "popup helper has unexpected PE subsystem: $subsystem" }
           Pop-Location
 
       - name: Package Windows legal notices

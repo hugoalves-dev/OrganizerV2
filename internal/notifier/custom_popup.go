@@ -6,6 +6,7 @@ import (
     "encoding/hex"
     "encoding/json"
     "fmt"
+    "log"
     "net"
     "net/http"
     "os"
@@ -112,6 +113,7 @@ func (l *customPopupLauncher) Show(event notificationEvent, cfg config.Notificat
         "--callback",listener.Addr().String(),
         "--token",token,
         "--duration",fmt.Sprint(cfg.Custom.DurationSeconds),
+        "--position",cfg.Custom.Position,
         "--drag-enabled",fmt.Sprint(cfg.Custom.DragAndDrop.Enabled),
     }
     // Pass a bounded set of opaque shortcut IDs and display names only.
@@ -140,7 +142,10 @@ func (l *customPopupLauncher) Show(event notificationEvent, cfg config.Notificat
         // Let hover/drag postpone dismissal; a hard upper bound handles frozen helpers.
         select{
         case err:=<-exited:
-            if err!=nil {return fmt.Errorf("custom popup crashed after initialization: %w",err)}
+            // READY is sent only after the UI is rendered and shown.
+            // A closed or crashed *visible* popup must never spawn a second
+            // native toast. Fallback is exclusively for pre-READY failures.
+            if err!=nil { log.Printf("[notifier] custom popup exited after READY: %v",err) }
         case <-l.closed:
             _=cmd.Process.Kill();<-exited
         case <-time.After(2*time.Hour):

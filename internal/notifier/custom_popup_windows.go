@@ -8,7 +8,6 @@ import (
     "encoding/hex"
     "encoding/json"
     "fmt"
-    "log"
     "net"
     "net/http"
     "os"
@@ -137,7 +136,8 @@ func (l *customPopupLauncher) Show(event notificationEvent, cfg config.Notificat
     case <-ready:
         // Keep callback alive until the helper exits or its timeout expires.
         select{
-        case <-exited:
+        case err:=<-exited:
+            if err!=nil {return fmt.Errorf("custom popup crashed after initialization: %w",err)}
         case <-l.closed:
             _=cmd.Process.Kill();<-exited
         case <-time.After(time.Duration(cfg.Custom.DurationSeconds+5)*time.Second):
@@ -154,4 +154,3 @@ func (l *customPopupLauncher) Show(event notificationEvent, cfg config.Notificat
     }
 }
 
-var _ = log.Printf

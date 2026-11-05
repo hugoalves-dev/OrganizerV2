@@ -108,6 +108,8 @@ See [`configs/config.yaml`](configs/config.yaml) for a fully annotated example.
 | `ignore_extensions` | Extensions that are never moved (partial downloads, temp files). |
 | `fallback_category` | Destination for files with unrecognised extensions (default: `Others`). |
 | `notifications.enabled` | Enable or disable desktop notifications. |
+| `notifications.custom.respect_fullscreen` | Windows custom popup only; defaults to `true` even when omitted from older YAML files. |
+| `notifications.custom.fullscreen_behavior` | Defaults to `defer`. Set `silent` to drop during fullscreen or `show` to use the previous immediate behavior. |
 | `notifications.actions.open_file` | Show **Open File** in the Windows toast. |
 | `notifications.actions.open_location` | Show **Open Location**, which selects the organized file in Explorer. |
 | `notifications.actions.copy_path` | Retained for platform compatibility; it is not shown in the Python-compatible Windows toast. |
@@ -162,6 +164,8 @@ sudo apt install xclip           # X11
 The **Open Location** action opens the folder via `xdg-open`. Linux notification behavior is otherwise unchanged.
 
 ### Windows
+
+The custom popup **defers by default during fullscreen games, borderless windows and fullscreen video**, even if the YAML lacks the new settings. Windows shell notification state is checked first, with foreground-window bounds as an additional heuristic. Up to eight file notifications are queued in memory, kept for at most ten minutes, then shown sequentially when fullscreen ends. Expired entries and files that no longer exist are skipped. Closing the watcher discards the queue. To override: `notifications.custom.fullscreen_behavior: silent` discards fullscreen notifications, `show` restores immediate popups, and `notifications.custom.respect_fullscreen: false` bypasses the check entirely. Native Windows toasts and Linux notifications are unchanged. Detection is best-effort; exclusive games, DPI and multi-monitor layouts need manual validation.
 
 Each organized file produces the custom popup when its optional helper is available, otherwise the original Windows toast. Both use the existing action handler and event registry.
 

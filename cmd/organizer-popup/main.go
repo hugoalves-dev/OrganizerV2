@@ -96,6 +96,7 @@ func main() {
 		URL: "/",
 		Hidden: true, // A partially loaded UI must never appear or count as READY.
 		Frameless: true,
+		BackgroundType: application.BackgroundTypeTransparent, // Prevent black corners behind the CSS border radius.
 		AlwaysOnTop: true,
 		DisableResize: true,
 		HideOnEscape: true,

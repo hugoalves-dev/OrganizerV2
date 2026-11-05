@@ -136,6 +136,8 @@ Global flags: `--config <path>`, `--log-level <level>`
 
 ## Notifications
 
+Custom Windows notifications use the separate `organizer-popup.exe` Wails v3 helper. Add it next to `organizer.exe` or the watcher falls back to its original native toast. By default `notifications.provider` is `custom` (including old YAML); `provider: native` always uses the old notifier. The helper uses `eaxum/wails-dragout` for native copy-only file drag-out; it does not delete the source after a drop. The requested Move/Copy/Link modifier negotiation is not yet supported. Linux retains its `notify-send` fallback. See [integration, manual checks, build and licensing](docs/issue-17-custom-popup.md) and [third-party notices](THIRD_PARTY_NOTICES.md).
+
 ### Linux
 
 Notifications are delivered via `notify-send`. Install it with your package manager:

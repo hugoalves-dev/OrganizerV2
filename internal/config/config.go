@@ -42,9 +42,22 @@ type NotificationActions struct {
 	Confirm      bool `yaml:"confirm"       mapstructure:"confirm"`
 }
 
+
+type CustomDragAndDropConfig struct {
+    Enabled bool `yaml:"enabled" mapstructure:"enabled"`
+    Operation string `yaml:"operation" mapstructure:"operation"`
+}
+type CustomNotificationConfig struct {
+    Position string `yaml:"position" mapstructure:"position"`
+    DurationSeconds int `yaml:"duration_seconds" mapstructure:"duration_seconds"`
+    DragAndDrop CustomDragAndDropConfig `yaml:"drag_and_drop" mapstructure:"drag_and_drop"`
+}
+
 // NotificationConfig controls notification behaviour.
 type NotificationConfig struct {
 	Enabled   bool                `yaml:"enabled" mapstructure:"enabled"`
+    Provider string `yaml:"provider" mapstructure:"provider"`
+    Custom CustomNotificationConfig `yaml:"custom" mapstructure:"custom"`
 	Actions   NotificationActions `yaml:"actions" mapstructure:"actions"`
 	Shortcuts []Shortcut          `yaml:"shortcuts" mapstructure:"shortcuts"`
 }
@@ -126,6 +139,9 @@ func Default() *Config {
 		LogLevel:            "info",
 		Notifications: NotificationConfig{
 			Enabled: true,
+            Provider: "custom",
+            Custom: CustomNotificationConfig{Position: "bottom_right", DurationSeconds: 15,
+              DragAndDrop: CustomDragAndDropConfig{Enabled: true, Operation: "copy"}},
 			Actions: NotificationActions{
 				OpenFile:     true,
 				OpenLocation: true,
@@ -223,6 +239,20 @@ func normalize(cfg *Config) error {
 		}
 		cfg.WatchPaths[i].TargetBase = tb
 	}
+
+    if cfg.Notifications.Provider == "" { cfg.Notifications.Provider = "custom" }
+    if cfg.Notifications.Provider != "custom" && cfg.Notifications.Provider != "native" {
+        return fmt.Errorf("notifications.provider must be custom or native, got %q", cfg.Notifications.Provider)
+    }
+    if cfg.Notifications.Custom.Position == "" { cfg.Notifications.Custom.Position = "bottom_right" }
+    if cfg.Notifications.Custom.Position != "bottom_right" {
+        return fmt.Errorf("unsupported notification position %q", cfg.Notifications.Custom.Position)
+    }
+    if cfg.Notifications.Custom.DurationSeconds <= 0 { cfg.Notifications.Custom.DurationSeconds = 15 }
+    if cfg.Notifications.Custom.DragAndDrop.Operation == "" { cfg.Notifications.Custom.DragAndDrop.Operation = "copy" }
+    if cfg.Notifications.Custom.DragAndDrop.Operation != "copy" {
+        return fmt.Errorf("unverified native drag operation %q: only copy is supported", cfg.Notifications.Custom.DragAndDrop.Operation)
+    }
 	normalizeStability(&cfg.Stability)
 	shortcuts, err := normalizeShortcuts(cfg.Notifications.Shortcuts)
 	if err != nil {

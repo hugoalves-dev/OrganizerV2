@@ -13,6 +13,8 @@ The original icon geometry was adapted with a project-specific background, spaci
 ## Optional Wails helper
 
 - Drag-out dependency: https://github.com/eaxum/wails-dragout (AGPL-3.0).
-- License text: LICENSES/AGPL-3.0.txt; upstream NOTICE: LICENSES/AGPL-NOTICE.txt.
+- License text: LICENSES/AGPL-3.0.txt; upstream NOTICE: LICENSES/AGPL-NOTICE.txt; adapted drag-rs MIT text: LICENSES/LICENSE.drag-rs.
 - An MIT-only distribution must exclude the AGPL-linked helper entirely. Choosing native in YAML is not sufficient.
 - Distributing the AGPL-linked helper requires applicable attribution, notices and Corresponding Source obligations.
+- Original drag-rs code portions: https://github.com/spacedriveapp/drag-rs (Copyright (c) 2023 - Present CrabNebula Ltd., MIT). Its original MIT license is included without changes as `LICENSES/LICENSE.drag-rs`.
+- Source reference pinned by OrganizerV2: `eaxum/wails-dragout` commit `b326ce6ab9cb`. Verify the complete dependency license inventory and the exact source offer before each release.

@@ -49,6 +49,9 @@ async function initialize(){
       finally{dragging=false;schedule(details.duration);}
     });
   }
+  const panel=document.querySelector('main');
+  panel.addEventListener('mouseenter',()=>clearTimeout(timer));
+  panel.addEventListener('mouseleave',()=>{if(!dragging)schedule(details.duration)});
   await Ready();schedule(details.duration);
 }
 initialize().catch(e=>{el('status').textContent='Popup error: '+String(e)});

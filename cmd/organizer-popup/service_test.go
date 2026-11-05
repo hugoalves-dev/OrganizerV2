@@ -9,11 +9,13 @@ import (
 )
 func TestMissingSourceRejectsDrag(t *testing.T) {
  svc:=NewPopupService(filepath.Join(t.TempDir(),"missing.txt"),"Documents",15)
+ svc.Configure("","",PopupDetails{DragEnabled:true})
  _,err:=svc.StartDrag(context.Background())
  if err==nil||!strings.Contains(err.Error(),"unavailable"){t.Fatalf("got %v",err)}
 }
 func TestDirectoriesCannotBeDragged(t *testing.T){
  svc:=NewPopupService(t.TempDir(),"Documents",15)
+ svc.Configure("","",PopupDetails{DragEnabled:true})
  _,err:=svc.StartDrag(context.Background())
  if err==nil||!strings.Contains(err.Error(),"regular"){t.Fatalf("got %v",err)}
 }
@@ -27,4 +29,10 @@ func TestUnknownShortcutNotSentToWatcher(t *testing.T){
  svc:=NewPopupService(filepath.Join(t.TempDir(),"example.txt"),"Documents",15)
  svc.Configure("127.0.0.1:1","test",PopupDetails{Choices:[]PopupChoice{{ID:"current",Name:"Current"}}})
  if err:=svc.Action("open_file","other");err==nil{t.Fatal("forged destination accepted")}
+}
+
+func TestDisabledDragIsRejected(t *testing.T){
+ svc:=NewPopupService(filepath.Join(t.TempDir(),"example.txt"),"Documents",15)
+ _,err:=svc.StartDrag(context.Background())
+ if err==nil||!strings.Contains(err.Error(),"disabled"){t.Fatalf("got %v",err)}
 }

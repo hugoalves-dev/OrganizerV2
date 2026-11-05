@@ -103,7 +103,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.binary }}
-          path: ${{ matrix.binary }}
+          path: |
+            ${{ matrix.binary }}
+            organizer-popup.exe
 
   release:
     name: Create GitHub Release
@@ -124,4 +126,5 @@ jobs:
             organizer-linux-amd64
             organizer-linux-arm64
             organizer-windows-amd64.exe
+            organizer-popup.exe
           generate_release_notes: true

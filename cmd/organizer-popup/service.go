@@ -22,7 +22,7 @@ type PopupDetails struct {
  Confirm bool `json:"confirm"`
  DragEnabled bool `json:"dragEnabled"`
 }
-type PopupService struct {path string; category string; duration int; app *application.App; mu sync.Mutex; options PopupDetails; callback string; authKey string}
+type PopupService struct {path string; category string; duration int; app *application.App; window *application.WebviewWindow; mu sync.Mutex; options PopupDetails; callback string; authKey string}
 func NewPopupService(path,category string,duration int)*PopupService{return &PopupService{path:path,category:category,duration:duration}}
 func(s *PopupService) SetApplication(app *application.App){s.app=app}
 func(s *PopupService) Filename()string{return filepath.Base(s.path)}
@@ -46,3 +46,13 @@ func(s *PopupService) StartDrag(ctx context.Context)(string,error){
 
 func(s *PopupService) Configure(address,key string,details PopupDetails){s.callback=address;s.authKey=key;s.options=details}
 func(s *PopupService) Details()PopupDetails{return s.options}
+
+func(s *PopupService) SetWindow(window *application.WebviewWindow){s.window=window}
+func(s *PopupService) Place() {
+ if s.app==nil||s.window==nil{return}
+ screen:=s.app.Screen.GetPrimary()
+ if screen==nil{return}
+ x:=screen.WorkArea.X+screen.WorkArea.Width-380-16
+ y:=screen.WorkArea.Y+screen.WorkArea.Height-230-16
+ s.window.SetPosition(x,y)
+}

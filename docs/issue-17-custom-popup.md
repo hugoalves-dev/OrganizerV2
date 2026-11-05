@@ -72,3 +72,9 @@ Original OrganizerV2 sources remain MIT. The optional Wails helper links `eaxum/
 If the Windows GUI helper exits before READY, the watcher now captures a bounded tail of its stdout/stderr and prints it together with the fallback reason. Wails errors are explicitly logged to stderr even in production mode (Wails' default production logger discards these). This avoids an unhelpful bare `exit status 1` when WebView2 or Wails initialization fails.
 
 Run `organizer-windows-amd64.exe start --log-level debug --show-terminal`, then organize a test download. The `[notifier] custom popup failed` line should include `helper diagnostics` with the specific startup problem. Missing helper or missing WebView2 are **not** assumed without diagnostics. The native notification is retained until the helper actually succeeds.
+
+### Frontend READY timeout diagnostics
+
+If `WebView2 Environment created successfully` appears but READY never arrives, the helper now logs the Wails navigation/runtime lifecycle, asset requests for the HTML/JS/bindings/runtime, calls to `PopupService.Details()` and `PopupService.Ready()`, and browser-side import/initialization failures. The module-loader bootstrap is deliberately inline so it still reports broken module imports even when the main JavaScript module cannot evaluate. A diagnostic-only `POST /popup-diagnostic` route accepts bounded, escaped text and cannot invoke file actions. The native toast fallback remains unchanged until the UI reports READY.
+
+Look for the last `[popup]` log entry in the watcher's `helper diagnostics`: a missing navigation/asset request suggests a WebView startup issue; a `module-import-error` identifies broken script resources; a `Details` call with no response suggests an IPC/binding issue; a `Ready` call before callback failure points at window visibility/callback handling. These are troubleshooting categories, not proof of the exact failure without the corresponding log.

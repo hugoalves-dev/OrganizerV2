@@ -37,12 +37,15 @@ func TestEmbeddedFrontendHasWorkingBindings(t *testing.T) {
 		}
 	}
 
-	server := application.BundledAssetFileServer(assets)
-	for _, path := range []string{"/", "/main.js", "/bindings/github.com/vitorhugo-java/organizerv2-popup/popupservice.js"} {
+	server := popupDiagnosticHandler(application.BundledAssetFileServer(assets))
+	for _, path := range []string{"/", "/main.js", "/bindings/github.com/vitorhugo-java/organizerv2-popup/popupservice.js", "/wails/runtime.js"} {
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
 		if response.Code != http.StatusOK {
 			t.Errorf("%s returned %d", path, response.Code)
+		}
+		if response.Body.Len() == 0 {
+			t.Errorf("%s returned empty body", path)
 		}
 	}
 }

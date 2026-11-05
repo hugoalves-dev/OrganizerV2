@@ -33,6 +33,35 @@ select { width: 100%; padding: 7px; margin: 4px 0 7px; border-radius: 6px; borde
 <label for="destination">Move file to</label><select id="destination"></select>
 <div id="actions"></div><div id="status">Drag to Explorer to copy</div>
 </main>
-<script type="module" src="./main.js"></script>
+<script>
+(function () {
+  // Install an error reporter BEFORE loading the module graph. A failed ES
+  // module import never reaches main.js's initialize().catch() handler.
+  window.popupDiagnostic = function (stage, message) {
+    try {
+      fetch('/popup-diagnostic', {
+        method: 'POST',
+        headers: {'Content-Type': 'text/plain;charset=UTF-8'},
+        body: (stage + ': ' + String(message || '')).slice(0, 900),
+        keepalive: true
+      }).catch(function () {});
+    } catch (_) {}
+  };
+  window.addEventListener('error', function (event) {
+    window.popupDiagnostic('browser-error', event.message || 'script loading error');
+  });
+  window.addEventListener('unhandledrejection', function (event) {
+    window.popupDiagnostic('unhandled-rejection', String(event.reason || 'unknown rejection'));
+  });
+  window.popupDiagnostic('bootstrap', 'index.html loaded');
+})();
+</script>
+<script type="module">
+  // A dynamic import catches missing modules, syntax errors, and failures
+  // resolving generated Wails bindings, which were previously invisible.
+  import('./main.js').catch(error => {
+    window.popupDiagnostic('module-import-error', error?.stack || String(error));
+  });
+</script>
 </body>
 </html>

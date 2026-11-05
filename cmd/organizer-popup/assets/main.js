@@ -2,6 +2,7 @@
 // Keep each notification inside its own helper process to isolate event data.
 import { Details, Ready, StartDrag, Action, Close } from './bindings/github.com/vitorhugo-java/organizerv2-popup/popupservice.js';
 
+window.popupDiagnostic?.('main-module', 'main.js and imports loaded');
 const el = id => document.getElementById(id);
 let timer;
 let dragging = false;
@@ -15,7 +16,9 @@ function schedule(seconds) {
 }
 
 async function initialize() {
+  window.popupDiagnostic?.('initialize', 'requesting Details binding');
   const details = await Details();
+  window.popupDiagnostic?.('initialize', 'Details binding resolved');
   if (!details?.filename || !details?.destination ||
       !Array.isArray(details.choices) || details.choices.length === 0) {
     throw new Error('Incomplete popup payload');
@@ -97,11 +100,14 @@ async function initialize() {
   });
 
   // A successful READY means the *complete* UI is already present and visible.
+  window.popupDiagnostic?.('initialize', 'requesting Ready binding');
   await Ready();
+  window.popupDiagnostic?.('initialize', 'Ready binding resolved');
   schedule(details.duration);
 }
 initialize().catch(error => {
   console.error('OrganizerV2 popup initialization failed', error);
+  window.popupDiagnostic?.('initialize-error', error?.stack || String(error));
   el('status').textContent = 'Popup error: ' + String(error);
   // Do not send READY; the watcher will fall back to native after its deadline.
 });

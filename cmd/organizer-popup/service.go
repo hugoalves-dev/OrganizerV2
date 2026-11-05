@@ -3,6 +3,7 @@ import (
  "context"
  "errors"
  "fmt"
+ "log"
  "os"
  "path/filepath"
  "sync"
@@ -47,7 +48,10 @@ func(s *PopupService) StartDrag(ctx context.Context)(string,error){
 }
 
 func(s *PopupService) configure(address,key string,details PopupDetails){s.callback=address;s.authKey=key;s.options=details}
-func(s *PopupService) Details()PopupDetails{return s.options}
+func(s *PopupService) Details()PopupDetails{
+ log.Print("[popup] Wails binding: Details called")
+ return s.options
+}
 
 func(s *PopupService) setWindow(window *application.WebviewWindow){s.window=window}
 const (

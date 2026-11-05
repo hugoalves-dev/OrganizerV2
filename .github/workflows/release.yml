@@ -99,6 +99,16 @@ jobs:
           go build -tags production -o ../../organizer-popup.exe .
           Pop-Location
 
+      - name: Package Windows legal notices
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force licenses | Out-Null
+          Copy-Item LICENSE licenses/MIT.txt
+          Copy-Item THIRD_PARTY_NOTICES.md licenses/
+          Copy-Item LICENSES/* licenses/
+          Compress-Archive -Path organizer-windows-amd64.exe,organizer-popup.exe,licenses -DestinationPath organizer-windows-amd64-bundle.zip
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:

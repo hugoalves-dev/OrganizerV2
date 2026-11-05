@@ -24,12 +24,12 @@ type linuxNotifier struct {
 	clipboardAvail  bool
 	clipboardCmd    string // "xclip", "xsel", or "wl-copy"
 	mu              sync.Mutex
+    popup           *customPopupLauncher
+    registry        *notificationEventRegistry
+    shortcuts       *notificationShortcutResolver
 }
 
 func newPlatform(cfg config.NotificationConfig) Notifier {
-    if cfg.Provider == "custom" {
-        log.Println("[notifier] native drag-out helper is not verified on Linux; using notify-send fallback (X11/Wayland)")
-    }
 	n := &linuxNotifier{cfg: cfg}
 	_, err := exec.LookPath("notify-send")
 	n.notifySendAvail = err == nil
@@ -47,6 +47,27 @@ func newPlatform(cfg config.NotificationConfig) Notifier {
 	if !n.clipboardAvail {
 		log.Println("[notifier] no clipboard tool found (wl-copy/xclip/xsel); Copy Path will log instead")
 	}
+    if cfg.Provider == "custom" {
+        // GTK3 + WebKit2GTK 4.1 helper, experimental on both X11 and Wayland.
+        // Headless and unsupported environments keep notify-send unchanged.
+        if os.Getenv("DISPLAY") == "" && os.Getenv("WAYLAND_DISPLAY") == "" {
+            log.Println("[notifier] no graphical session; using notify-send")
+        } else if executable, err := os.Executable(); err != nil {
+            log.Printf("[notifier] cannot locate Wails helper: %v", err)
+        } else {
+            registry := newNotificationEventRegistry(defaultEventRegistryOptions())
+            shortcuts := newNotificationShortcutResolver(cfg.Shortcuts)
+            handler := &windowsNotificationActionHandler{
+                registry: registry,
+                shortcuts: &shortcuts,
+                files: &linuxFileActionService{notifier: n},
+                logf: log.Printf,
+            }
+            n.registry = registry
+            n.shortcuts = &shortcuts
+            n.popup = newCustomPopupLauncher(executable, handler)
+        }
+    }
 	return n
 }
 
@@ -59,10 +80,24 @@ func (n *linuxNotifier) deliver(event FileEvent) {
 	filename := filepath.Base(event.Destination)
 	body := fmt.Sprintf("Moved to %s/", event.Category)
 
-	// Copy to clipboard before blocking on the notification.
-	if n.cfg.Actions.CopyPath {
-		n.copyToClipboard(event.Destination)
-	}
+	// Preserve the Linux notifier's legacy Copy Path behavior.
+    if n.cfg.Actions.CopyPath { n.copyToClipboard(event.Destination) }
+
+    if n.popup != nil && n.registry != nil {
+        registered, err := n.registry.Register(event.Destination, event.Category)
+        if err != nil {
+            log.Printf("[notifier] Linux popup registration failed; falling back: %v", err)
+        } else {
+            var shortcuts []resolvedShortcut
+            if n.shortcuts != nil { shortcuts = n.shortcuts.All() }
+            if err := n.popup.Show(registered, n.cfg, shortcuts); err == nil {
+                return
+            } else {
+                n.registry.Remove(registered.ID)
+                log.Printf("[notifier] Linux popup unavailable; using notify-send: %v", err)
+            }
+        }
+    }
 
 	if n.notifySendAvail && n.cfg.Enabled {
 		args := []string{
@@ -140,4 +175,8 @@ func (n *linuxNotifier) openLocation(filePath string) {
 	}
 }
 
-func (n *linuxNotifier) Close() error { return nil }
+func (n *linuxNotifier) Close() error {
+    if n.popup != nil { n.popup.Close() }
+    if n.registry != nil { return n.registry.Close() }
+    return nil
+}

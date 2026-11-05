@@ -86,6 +86,16 @@ fallback_category: Others
 # Desktop notifications after each move.
 notifications:
   enabled: true
+  # custom starts a standalone Wails helper; native preserves the old notifier.
+  # Missing helper or startup failure automatically uses native.
+  provider: custom
+  custom:
+    position: bottom_right
+    duration_seconds: 15
+    drag_and_drop:
+      enabled: true
+      # Current backend is copy-only, despite the requested future Move default.
+      operation: copy
   actions:
     # Shows the Open File button in the Windows toast.
     open_file: true

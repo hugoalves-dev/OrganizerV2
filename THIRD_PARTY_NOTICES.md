@@ -9,3 +9,10 @@ OrganizerV2's checklist brand asset is adapted from the `checklist` icon in Tabl
 - License: MIT
 
 The original icon geometry was adapted with a project-specific background, spacing, and stroke treatment for Windows application icon legibility.
+
+## Optional Wails helper
+
+- Drag-out dependency: https://github.com/eaxum/wails-dragout (AGPL-3.0).
+- License text: LICENSES/AGPL-3.0.txt; upstream NOTICE: LICENSES/AGPL-NOTICE.txt.
+- An MIT-only distribution must exclude the AGPL-linked helper entirely. Choosing native in YAML is not sufficient.
+- Distributing the AGPL-linked helper requires applicable attribution, notices and Corresponding Source obligations.

@@ -116,6 +116,7 @@ jobs:
           path: |
             ${{ matrix.binary }}
             organizer-popup.exe
+            organizer-windows-amd64-bundle.zip
 
   release:
     name: Create GitHub Release
@@ -137,4 +138,5 @@ jobs:
             organizer-linux-arm64
             organizer-windows-amd64.exe
             organizer-popup.exe
+            organizer-windows-amd64-bundle.zip
           generate_release_notes: true

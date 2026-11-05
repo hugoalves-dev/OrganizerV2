@@ -109,6 +109,38 @@ jobs:
           Copy-Item LICENSES/* licenses/
           Compress-Archive -Path organizer-windows-amd64.exe,organizer-popup.exe,licenses -DestinationPath organizer-windows-amd64-bundle.zip
 
+      - name: Install GTK3/WebKitGTK for Linux helper
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - uses: actions/setup-go@v5
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        with:
+          go-version-file: cmd/organizer-popup/go.mod
+          cache: false
+
+      - name: Build optional Linux popup (GTK3)
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          cd cmd/organizer-popup
+          go mod tidy
+          go run github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.32 generate bindings -d ./assets/bindings
+          go test -tags gtk3 ./...
+          go build -trimpath -tags "gtk3 production" -o ../../organizer-popup .
+
+      - name: Package Linux popup and legal notices
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        run: |
+          mkdir -p licenses
+          cp LICENSE licenses/MIT.txt
+          cp LICENSES/* licenses/
+          cp THIRD_PARTY_NOTICES.md licenses/
+          tar -czf organizer-linux-amd64-bundle.tar.gz organizer-linux-amd64 organizer-popup licenses
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -116,7 +148,9 @@ jobs:
           path: |
             ${{ matrix.binary }}
             organizer-popup.exe
+            organizer-popup
             organizer-windows-amd64-bundle.zip
+            organizer-linux-amd64-bundle.tar.gz
 
   release:
     name: Create GitHub Release
@@ -138,5 +172,7 @@ jobs:
             organizer-linux-arm64
             organizer-windows-amd64.exe
             organizer-popup.exe
+            organizer-popup
             organizer-windows-amd64-bundle.zip
+            organizer-linux-amd64-bundle.tar.gz
           generate_release_notes: true

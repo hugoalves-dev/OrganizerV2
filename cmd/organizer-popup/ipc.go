@@ -9,7 +9,21 @@ import (
   "time"
 )
 
-func (s *PopupService) Ready() error {s.place();return s.request("/ready",nil)}
+func (s *PopupService) Ready() error {
+  if s.window == nil {
+    return errors.New("popup window unavailable")
+  }
+  // Show only after the JS has rendered the filename, destinations and buttons.
+  // A failed JS import keeps the helper hidden and triggers genuine fallback.
+  s.place()
+  s.window.Show()
+  if err := s.request("/ready", nil); err != nil {
+    s.window.Hide()
+    s.Close()
+    return err
+  }
+  return nil
+}
 func (s *PopupService) Action(action, selection string) error {
   if action!="open_location" && action!="open_file" && action!="confirm" {
     return errors.New("unsupported action")

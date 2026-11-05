@@ -15,6 +15,7 @@ type PopupDetails struct {
  Filename string `json:"filename"`
  Category string `json:"category"`
  Folder string `json:"folder"`
+ Destination string `json:"destination"`
  Duration int `json:"duration"`
  Choices []PopupChoice `json:"choices"`
  OpenFile bool `json:"openFile"`
@@ -49,11 +50,34 @@ func(s *PopupService) configure(address,key string,details PopupDetails){s.callb
 func(s *PopupService) Details()PopupDetails{return s.options}
 
 func(s *PopupService) setWindow(window *application.WebviewWindow){s.window=window}
-func(s *PopupService) place() {
- if s.app==nil||s.window==nil{return}
- screen:=s.app.Screen.GetPrimary()
- if screen==nil{return}
- x:=screen.WorkArea.X+screen.WorkArea.Width-380-16
- y:=screen.WorkArea.Y+screen.WorkArea.Height-230-16
- s.window.SetPosition(x,y)
+const (
+	popupWidth = 380
+	popupHeight = 270
+	popupMargin = 16
+)
+
+// Coordinates and dimensions are in Wails logical pixels (not scaled physical
+// pixels). WorkArea excludes the taskbar and can have a non-zero origin.
+func popupBottomRight(area application.Rect, width, height, margin int) (int, int) {
+	x := area.X + area.Width - width - margin
+	y := area.Y + area.Height - height - margin
+	if x < area.X {
+		x = area.X
+	}
+	if y < area.Y {
+		y = area.Y
+	}
+	return x, y
+}
+
+func (s *PopupService) place() {
+	if s.app == nil || s.window == nil {
+		return
+	}
+	screen := s.app.Screen.GetPrimary()
+	if screen == nil {
+		return
+	}
+	x, y := popupBottomRight(screen.WorkArea, popupWidth, popupHeight, popupMargin)
+	s.window.SetPosition(x, y)
 }

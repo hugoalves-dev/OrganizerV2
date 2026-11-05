@@ -30,6 +30,9 @@ func main() {
 	openLocation := flag.Bool("open-location", true, "open folder action")
 	confirm := flag.Bool("confirm", true, "confirm action")
 	flag.Parse()
+	if flag.NArg() != 0 {
+		log.Fatal("unexpected positional argument; boolean flags must use --flag=true or --flag=false")
+	}
 
 	if !filepath.IsAbs(*file) || *event == "" || *callback == "" || *token == "" || *duration <= 0 || *duration > 3600 {
 		log.Print("popup requires a valid OrganizerV2 notification")

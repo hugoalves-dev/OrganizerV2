@@ -7,6 +7,7 @@ import (
     "encoding/json"
     "fmt"
     "log"
+    "strings"
     "net"
     "net/http"
     "os"
@@ -130,6 +131,12 @@ func (l *customPopupLauncher) Show(event notificationEvent, cfg config.Notificat
         "--open-location",fmt.Sprint(cfg.Actions.OpenLocation),
         "--confirm",fmt.Sprint(cfg.Actions.Confirm))
     cmd:=exec.Command(helper,args...)
+    // A GUI-subsystem executable has no console. Always capture child stdout
+    // and stderr; otherwise a Wails startup failure only reports exit status 1.
+    // Keep the last few KiB bounded even if the helper is chatty.
+    diagnostics:=&popupDiagnosticLog{}
+    cmd.Stdout=diagnostics
+    cmd.Stderr=diagnostics
     if err:=cmd.Start();err!=nil{return fmt.Errorf("cannot start custom popup: %w",err)}
     exited:=make(chan error,1)
     go func(){exited<-cmd.Wait()}()
@@ -145,17 +152,19 @@ func (l *customPopupLauncher) Show(event notificationEvent, cfg config.Notificat
             // READY is sent only after the UI is rendered and shown.
             // A closed or crashed *visible* popup must never spawn a second
             // native toast. Fallback is exclusively for pre-READY failures.
-            if err!=nil { log.Printf("[notifier] custom popup exited after READY: %v",err) }
+            if err!=nil { log.Printf("[notifier] custom popup exited after READY: %v; diagnostics: %s",err,diagnostics.String()) }
         case <-l.closed:
             _=cmd.Process.Kill();<-exited
         case <-time.After(2*time.Hour):
             _=cmd.Process.Kill();<-exited
         }
         return nil
-    case err:=<-exited:return fmt.Errorf("popup helper exited before ready: %v",err)
+    case err:=<-exited:return popupStartupFailure(err,diagnostics.String())
     case <-timer.C:
         _=cmd.Process.Kill();<-exited
-        return fmt.Errorf("popup failed to initialize in 10 seconds")
+        output:=strings.TrimSpace(diagnostics.String())
+        if output!="" {return fmt.Errorf("popup failed to initialize in 10 seconds; helper diagnostics: %s",output)}
+        return fmt.Errorf("popup failed to initialize in 10 seconds (no helper diagnostics)")
     case <-l.closed:
         _=cmd.Process.Kill();<-exited
         return fmt.Errorf("popup launcher was closed")

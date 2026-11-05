@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
@@ -64,8 +65,19 @@ func main() {
 	}
 	service := NewPopupService(*file, *category, *duration)
 	service.configure(*callback, *token, details)
+	// The Wails production default discards its own logs. In a Windows GUI
+	// binary there is no console either, so keep errors on stderr for the
+	// watcher's bounded subprocess diagnostic capture.
+	log.Printf("[popup] initializing Wails (pid=%d)", os.Getpid())
 	app := application.New(application.Options{
 		Name: "OrganizerV2 Popup",
+		Logger: slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn})),
+		ErrorHandler: func(err error) {
+			log.Printf("[popup] Wails error: %v", err)
+		},
+		WarningHandler: func(message string) {
+			log.Printf("[popup] Wails warning: %s", message)
+		},
 		Services: []application.Service{application.NewService(service)},
 		Assets: application.AssetOptions{Handler: application.BundledAssetFileServer(assets)},
 	})
@@ -85,6 +97,6 @@ func main() {
 	})
 	service.setWindow(window)
 	if err := app.Run(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("[popup] Wails Run failed: %v", err)
 	}
 }

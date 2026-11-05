@@ -66,3 +66,9 @@ Original OrganizerV2 sources remain MIT. The optional Wails helper links `eaxum/
 - Wails bindings and embedded frontend routes are checked in helper tests; generate bindings before `go test ./...` in the helper module.
 - The custom popup uses the existing shortcut IDs and native file-action handler, and releases its event when the popup process ends. The watcher remains asynchronous.
 - **Manual Windows 11 acceptance is still required** for physical drag-out, DPI/multi-monitor window placement, simultaneous downloads and actual click/move actions. Unit tests and CI cannot certify these desktop interactions.
+
+## Runtime startup diagnostics (follow-up to #19)
+
+If the Windows GUI helper exits before READY, the watcher now captures a bounded tail of its stdout/stderr and prints it together with the fallback reason. Wails errors are explicitly logged to stderr even in production mode (Wails' default production logger discards these). This avoids an unhelpful bare `exit status 1` when WebView2 or Wails initialization fails.
+
+Run `organizer-windows-amd64.exe start --log-level debug --show-terminal`, then organize a test download. The `[notifier] custom popup failed` line should include `helper diagnostics` with the specific startup problem. Missing helper or missing WebView2 are **not** assumed without diagnostics. The native notification is retained until the helper actually succeeds.

@@ -50,6 +50,8 @@ type CustomDragAndDropConfig struct {
 type CustomNotificationConfig struct {
     Position string `yaml:"position" mapstructure:"position"`
     DurationSeconds int `yaml:"duration_seconds" mapstructure:"duration_seconds"`
+    RespectFullscreen bool `yaml:"respect_fullscreen" mapstructure:"respect_fullscreen"`
+    FullscreenBehavior string `yaml:"fullscreen_behavior" mapstructure:"fullscreen_behavior"`
     DragAndDrop CustomDragAndDropConfig `yaml:"drag_and_drop" mapstructure:"drag_and_drop"`
 }
 
@@ -141,6 +143,7 @@ func Default() *Config {
 			Enabled: true,
             Provider: "custom",
             Custom: CustomNotificationConfig{Position: "bottom_right", DurationSeconds: 15,
+              RespectFullscreen: true, FullscreenBehavior: "defer",
               DragAndDrop: CustomDragAndDropConfig{Enabled: true, Operation: "copy"}},
 			Actions: NotificationActions{
 				OpenFile:     true,
@@ -249,6 +252,12 @@ func normalize(cfg *Config) error {
         return fmt.Errorf("unsupported notification position %q", cfg.Notifications.Custom.Position)
     }
     if cfg.Notifications.Custom.DurationSeconds <= 0 { cfg.Notifications.Custom.DurationSeconds = 15 }
+    if cfg.Notifications.Custom.FullscreenBehavior == "" { cfg.Notifications.Custom.FullscreenBehavior = "defer" }
+    switch cfg.Notifications.Custom.FullscreenBehavior {
+    case "defer", "silent", "show":
+    default:
+        return fmt.Errorf("notifications.custom.fullscreen_behavior must be defer, silent or show, got %q", cfg.Notifications.Custom.FullscreenBehavior)
+    }
     if cfg.Notifications.Custom.DragAndDrop.Operation == "" { cfg.Notifications.Custom.DragAndDrop.Operation = "copy" }
     if cfg.Notifications.Custom.DragAndDrop.Operation != "copy" {
         return fmt.Errorf("unverified native drag operation %q: only copy is supported", cfg.Notifications.Custom.DragAndDrop.Operation)

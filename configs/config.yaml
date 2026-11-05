@@ -94,6 +94,13 @@ notifications:
   custom:
     position: bottom_right
     duration_seconds: 15
+    # Windows custom popup: postpone notifications during fullscreen games/video.
+    # Omitted values default to true + defer (including existing YAML files).
+    respect_fullscreen: true
+    # defer: queue up to 8 for up to 10 minutes, replay one at a time.
+    # silent: discard notifications during fullscreen.
+    # show: show immediately, as in previous versions.
+    fullscreen_behavior: defer
     drag_and_drop:
       enabled: true
       # Current backend is copy-only, despite the requested future Move default.

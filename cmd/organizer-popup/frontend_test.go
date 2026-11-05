@@ -37,6 +37,17 @@ func TestEmbeddedFrontendHasWorkingBindings(t *testing.T) {
 		}
 	}
 
+	// There is no Vite/npm bundler in this popup. Go's embedded asset server
+	// provides /wails/runtime.js, so imports must be browser-resolvable.
+	// A bare @wailsio/runtime specifier fails at browser module resolution,
+	// leaving the hidden popup without READY (issue #19).
+	if strings.Contains(string(bindings), `"@wailsio/runtime"`) {
+		t.Fatal("generated bindings require npm runtime; generate with -b")
+	}
+	if !strings.Contains(string(bindings), `"/wails/runtime.js"`) {
+		t.Fatal("generated bindings must import the bundled Wails runtime")
+	}
+
 	server := popupDiagnosticHandler(application.BundledAssetFileServer(assets))
 	for _, path := range []string{"/", "/main.js", "/bindings/github.com/vitorhugo-java/organizerv2-popup/popupservice.js", "/wails/runtime.js"} {
 		response := httptest.NewRecorder()

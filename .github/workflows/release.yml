@@ -81,6 +81,24 @@ jobs:
             -o ${{ matrix.binary }} \
             ./cmd/organizer
 
+      - uses: actions/setup-go@v5
+        if: matrix.goos == 'windows'
+        with:
+          go-version-file: cmd/organizer-popup/go.mod
+          cache: false
+
+      - name: Build Wails popup
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          Push-Location cmd/organizer-popup
+          go mod tidy
+          go run github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.32 generate bindings -d ./assets/bindings
+          go build -tags production -o ../../organizer-popup.exe .
+          Pop-Location
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:

@@ -39,19 +39,19 @@ func main(){
         OpenFile:*openFile,OpenLocation:*openLocation,Confirm:*confirm,DragEnabled:*dragEnabled,
     }
     service:=NewPopupService(*file,*category,*duration)
-    service.Configure(*callback,*token,details)
+    service.configure(*callback,*token,details)
     app:=application.New(application.Options{
         Name:"OrganizerV2 Popup",
         Services:[]application.Service{application.NewService(service)},
         Assets:application.AssetOptions{Handler:application.BundledAssetFileServer(assets)},
     })
-    service.SetApplication(app)
+    service.setApplication(app)
     window:=app.Window.NewWithOptions(application.WebviewWindowOptions{
         Title:"OrganizerV2",Width:380,Height:230,URL:"/",
         Frameless:true,AlwaysOnTop:true,DisableResize:true,
         HideOnEscape:true,DefaultContextMenuDisabled:true,
         Windows:application.WindowsWindow{HiddenOnTaskbar:true,DisableMenu:true},
     })
-    service.SetWindow(window)
+    service.setWindow(window)
     if err:=app.Run();err!=nil{log.Fatal(err)}
 }

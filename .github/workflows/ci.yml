@@ -122,11 +122,10 @@ jobs:
           go build -trimpath -tags production -ldflags="-H windowsgui" -o ../../dist/organizer-popup.exe .
           if ($LASTEXITCODE -ne 0) { throw 'popup build failed' }
           # IMAGE_SUBSYSTEM_WINDOWS_GUI (2), not console (3).
-          $binary = [IO.File]::ReadAllBytes('../../dist/organizer-popup.exe')
+          $binary = [IO.File]::ReadAllBytes((Resolve-Path '../../dist/organizer-popup.exe').Path)
           $peOffset = [BitConverter]::ToInt32($binary, 0x3c)
           $subsystem = [BitConverter]::ToUInt16($binary, $peOffset + 0x5c)
           if ($subsystem -ne 2) { throw "popup helper has unexpected PE subsystem: $subsystem" }
-          if ($LASTEXITCODE -ne 0) { throw 'popup build failed' }
           Pop-Location
 
       - name: Package Windows popup with required license notices

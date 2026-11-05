@@ -107,29 +107,8 @@ func (l *customPopupLauncher) Show(event notificationEvent, cfg config.Notificat
     go func(){ _=server.Serve(listener);close(serverStopped) }()
     defer func(){_ =server.Close();<-serverStopped}()
 
-    args:=[]string{
-        "--file",event.CurrentPath,
-        "--category",event.Category,
-        "--event",event.ID,
-        "--callback",listener.Addr().String(),
-        "--token",token,
-        "--duration",fmt.Sprint(cfg.Custom.DurationSeconds),
-        "--position",cfg.Custom.Position,
-        "--drag-enabled",fmt.Sprint(cfg.Custom.DragAndDrop.Enabled),
-    }
-    // Pass a bounded set of opaque shortcut IDs and display names only.
-    type choice struct{ ID string `json:"id"`; Name string `json:"name"` }
-    choices:=[]choice{{currentDestinationSelectionID,currentDestinationLabel(filepath.Dir(event.CurrentPath))}}
-    if cfg.Actions.MoveTo {
-        for _,sc:=range shortcuts {
-            if !sameDestinationDirectory(event.CurrentPath,sc.Path) { choices=append(choices,choice{sc.ID,sc.Name}) }
-        }
-    }
-    choicesJSON,err:=json.Marshal(choices);if err!=nil{return err}
-    args=append(args,"--choices",string(choicesJSON),
-        "--open-file",fmt.Sprint(cfg.Actions.OpenFile),
-        "--open-location",fmt.Sprint(cfg.Actions.OpenLocation),
-        "--confirm",fmt.Sprint(cfg.Actions.Confirm))
+    args,err:=popupCommandArgs(event,cfg,shortcuts,listener.Addr().String(),token)
+    if err!=nil{return fmt.Errorf("build popup arguments: %w",err)}
     cmd:=exec.Command(helper,args...)
     // A GUI-subsystem executable has no console. Always capture child stdout
     // and stderr; otherwise a Wails startup failure only reports exit status 1.
@@ -171,3 +150,36 @@ func (l *customPopupLauncher) Show(event notificationEvent, cfg config.Notificat
     }
 }
 
+
+// popupCommandArgs constructs the argument vector consumed by organizer-popup.
+// Go's flag package requires --bool=value. Passing a bool as two arguments
+// makes flag.Parse stop at the bare "true"/"false", skipping later flags.
+func popupCommandArgs(event notificationEvent, cfg config.NotificationConfig, shortcuts []resolvedShortcut, callback, token string) ([]string, error) {
+    // Only pass opaque shortcut IDs and display names, never arbitrary paths.
+    type choice struct { ID string `json:"id"`; Name string `json:"name"` }
+    choices:=[]choice{{currentDestinationSelectionID,currentDestinationLabel(filepath.Dir(event.CurrentPath))}}
+    if cfg.Actions.MoveTo {
+        for _,sc:=range shortcuts {
+            if !sameDestinationDirectory(event.CurrentPath,sc.Path) {
+                choices=append(choices,choice{sc.ID,sc.Name})
+            }
+        }
+    }
+    choicesJSON,err:=json.Marshal(choices)
+    if err!=nil{return nil,err}
+
+    return []string{
+        "--file",event.CurrentPath,
+        "--category",event.Category,
+        "--event",event.ID,
+        "--callback",callback,
+        "--token",token,
+        "--duration",fmt.Sprint(cfg.Custom.DurationSeconds),
+        "--position",cfg.Custom.Position,
+        fmt.Sprintf("--drag-enabled=%t",cfg.Custom.DragAndDrop.Enabled),
+        "--choices",string(choicesJSON),
+        fmt.Sprintf("--open-file=%t",cfg.Actions.OpenFile),
+        fmt.Sprintf("--open-location=%t",cfg.Actions.OpenLocation),
+        fmt.Sprintf("--confirm=%t",cfg.Actions.Confirm),
+    },nil
+}

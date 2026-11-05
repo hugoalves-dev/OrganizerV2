@@ -30,6 +30,7 @@ func(s *PopupService) Category()string{return s.category}
 func(s *PopupService) Duration()int{return s.duration}
 func(s *PopupService) Close(){if s.app!=nil{go s.app.Quit()}}
 func(s *PopupService) StartDrag(ctx context.Context)(string,error){
+ if !s.options.DragEnabled{return "",errors.New("drag-out is disabled")}
  if !s.mu.TryLock(){return "",errors.New("drag already running")}
  defer s.mu.Unlock()
  if !filepath.IsAbs(s.path){return "",errors.New("path must be absolute")}

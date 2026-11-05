@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
 //go:embed assets
@@ -82,7 +83,10 @@ func main() {
 			log.Printf("[popup] Wails warning: %s", message)
 		},
 		Services: []application.Service{application.NewService(service)},
-		Assets: application.AssetOptions{Handler: application.BundledAssetFileServer(assets)},
+		Assets: application.AssetOptions{
+			Handler: popupDiagnosticHandler(application.BundledAssetFileServer(assets)),
+			Middleware: popupAssetRequestLogger,
+		},
 	})
 	service.setApplication(app)
 	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
@@ -99,6 +103,13 @@ func main() {
 		Windows: application.WindowsWindow{HiddenOnTaskbar: true, DisableMenu: true},
 	})
 	service.setWindow(window)
+	window.OnWindowEvent(events.Windows.WebViewNavigationCompleted, func(_ *application.WindowEvent) {
+		log.Print("[popup] Wails: WebView navigation completed")
+	})
+	window.OnWindowEvent(events.Common.WindowRuntimeReady, func(_ *application.WindowEvent) {
+		log.Print("[popup] Wails: frontend runtime ready")
+	})
+	log.Print("[popup] starting Wails event loop")
 	if err := app.Run(); err != nil {
 		log.Fatalf("[popup] Wails Run failed: %v", err)
 	}

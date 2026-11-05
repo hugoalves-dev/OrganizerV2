@@ -5,6 +5,7 @@ import (
   "encoding/json"
   "errors"
   "fmt"
+  "log"
   "net/http"
   "time"
 )
@@ -15,13 +16,18 @@ func (s *PopupService) Ready() error {
   }
   // Show only after the JS has rendered the filename, destinations and buttons.
   // A failed JS import keeps the helper hidden and triggers genuine fallback.
+  log.Print("[popup] Wails binding: Ready called; positioning window")
   s.place()
+  log.Print("[popup] Wails binding: showing popup")
   s.window.Show()
+  log.Print("[popup] Wails binding: signalling READY to watcher")
   if err := s.request("/ready", nil); err != nil {
+    log.Printf("[popup] Wails binding: READY callback failed: %v", err)
     s.window.Hide()
     s.Close()
     return err
   }
+  log.Print("[popup] Wails binding: READY accepted")
   return nil
 }
 func (s *PopupService) Action(action, selection string) error {

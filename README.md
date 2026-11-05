@@ -235,4 +235,4 @@ Place a shortcut to `organizer.exe start` in:
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Original OrganizerV2 source is MIT — see [LICENSE](LICENSE). The optional Wails popup links AGPL-3.0-licensed `eaxum/wails-dragout`. Builds distributing that helper must meet applicable AGPL conditions for the combined work, including license notices and Corresponding Source. Choosing the native provider at runtime does not remove AGPL code from the helper. See [LICENSES](LICENSES), [third-party notices](THIRD_PARTY_NOTICES.md) and [integration guidance](docs/issue-17-custom-popup.md).

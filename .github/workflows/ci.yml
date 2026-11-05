@@ -119,8 +119,13 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Wails bindings failed' }
           go test ./...
           if ($LASTEXITCODE -ne 0) { throw 'popup tests failed' }
-          go build -trimpath -tags production -o ../../dist/organizer-popup.exe .
+          go build -trimpath -tags production -ldflags="-H windowsgui" -o ../../dist/organizer-popup.exe .
           if ($LASTEXITCODE -ne 0) { throw 'popup build failed' }
+          # IMAGE_SUBSYSTEM_WINDOWS_GUI (2), not console (3).
+          $binary = [IO.File]::ReadAllBytes((Resolve-Path '../../dist/organizer-popup.exe').Path)
+          $peOffset = [BitConverter]::ToInt32($binary, 0x3c)
+          $subsystem = [BitConverter]::ToUInt16($binary, $peOffset + 0x5c)
+          if ($subsystem -ne 2) { throw "popup helper has unexpected PE subsystem: $subsystem" }
           Pop-Location
 
       - name: Package Windows popup with required license notices

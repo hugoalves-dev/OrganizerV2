@@ -110,11 +110,11 @@ jobs:
         if: matrix.goos == 'windows'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force licenses | Out-Null
-          Copy-Item LICENSE licenses/MIT.txt
-          Copy-Item THIRD_PARTY_NOTICES.md licenses/
-          Copy-Item LICENSES/* licenses/
-          Compress-Archive -Path organizer-windows-amd64.exe,organizer-popup.exe,licenses -DestinationPath organizer-windows-amd64-bundle.zip
+          New-Item -ItemType Directory -Force release-licenses | Out-Null
+          Copy-Item LICENSE release-licenses/MIT.txt
+          Copy-Item THIRD_PARTY_NOTICES.md release-licenses/
+          Copy-Item LICENSES/* release-licenses/
+          Compress-Archive -Path organizer-windows-amd64.exe,organizer-popup.exe,release-licenses -DestinationPath organizer-windows-amd64-bundle.zip
 
       - name: Install GTK3/WebKitGTK for Linux helper
         if: matrix.goos == 'linux' && matrix.goarch == 'amd64'

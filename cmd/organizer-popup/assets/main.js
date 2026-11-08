@@ -81,9 +81,14 @@ async function initialize() {
       el('status').textContent = 'Native drag in progress…';
       try {
         const result = await StartDrag();
-        el('status').textContent = result === 'dropped'
-          ? 'Drop accepted. Verify the copy in Explorer.'
-          : 'Drag cancelled. Original preserved.';
+        const messages = {
+          copy: 'Copied to Explorer. The original is preserved.',
+          move: 'Moved to Explorer. Check the file’s new location.',
+          link: 'Shortcut created in Explorer.',
+          none: 'No drag effect was confirmed. Check Explorer and the source file.',
+          unknown: 'The drag ended with an unrecognized effect.'
+        };
+        el('status').textContent = messages[result] || messages.unknown;
       } catch (error) {
         el('status').textContent = 'Drag failed: ' + String(error);
       } finally {

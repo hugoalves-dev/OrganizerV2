@@ -3,7 +3,7 @@
 ## Source inventory reviewed
 
 - OrganizerV2 original: MIT, `LICENSE` and `LICENSES/MIT.txt`.
-- `github.com/eaxum/wails-dragout` pinned to `b326ce6ab9cb`: AGPL-3.0, upstream `LICENSE` and `NOTICE`. `LICENSES/AGPL-3.0.txt` and `LICENSES/AGPL-NOTICE.txt` preserve these texts.
+- `github.com/eaxum/wails-dragout` uses the PR #2 source commit `02b1a12bf3b7` from `github.com/hugoalves-dev/wails-dragout` (pseudo-version `v0.0.0-20261108214754-02b1a12bf3b7`): AGPL-3.0, upstream `LICENSE` and `NOTICE`. `LICENSES/AGPL-3.0.txt` and `LICENSES/AGPL-NOTICE.txt` preserve these texts.
 - Adapted `drag-rs` contribution: MIT, Copyright (c) 2023 - Present CrabNebula Ltd. The exact upstream `LICENSE.drag-rs` is copied into `LICENSES/LICENSE.drag-rs` and `THIRD_PARTY_NOTICES.md`.
 - Tabler Icons brand asset attribution: MIT, identified in `THIRD_PARTY_NOTICES.md`.
 - Other transitive dependencies (Wails, GTK/WebKit, Go packages): **not a completed license-by-license legal audit**. Recheck the dependency manifest and runtime libraries for each release.
@@ -27,4 +27,6 @@
 - [ ] Supply and test version-matched Corresponding Source distribution procedure
 - [ ] Obtain legal approval for the specific distribution format before shipping AGPL helper
 
-Upstream sources: https://github.com/eaxum/wails-dragout/tree/b326ce6ab9cb and https://www.gnu.org/licenses/agpl-3.0.html
+Dependency source used for the Windows alpha: https://github.com/hugoalves-dev/wails-dragout/tree/02b1a12bf3b716e14abbda66ef8ba87793ca9f12 (PR #2, issue #1 remains open for Linux follow-up).
+
+License terms: https://www.gnu.org/licenses/agpl-3.0.html

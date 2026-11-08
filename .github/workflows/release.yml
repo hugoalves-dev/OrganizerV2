@@ -174,6 +174,10 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
+          draft: ${{ contains(github.ref_name, '-alpha.') }}
+          prerelease: ${{ contains(github.ref_name, '-alpha.') }}
+          body: >-
+            ${{ contains(github.ref_name, '-alpha.') && 'Windows alpha preview of OrganizerV2 native drag effects. The Wails popup uses [wails-dragout commit 02b1a12](https://github.com/hugoalves-dev/wails-dragout/tree/02b1a12bf3b716e14abbda66ef8ba87793ca9f12) from [PR #2](https://github.com/eaxum/wails-dragout/pull/2). [Issue #1](https://github.com/eaxum/wails-dragout/issues/1) remains open for a separate Linux follow-up.' || '' }}
           files: |
             organizer-linux-amd64
             organizer-linux-arm64

@@ -101,7 +101,13 @@ func main() {
 		DisableResize: true,
 		HideOnEscape: true,
 		DefaultContextMenuDisabled: true,
-		Windows: application.WindowsWindow{HiddenOnTaskbar: true, DisableMenu: true},
+		Windows: application.WindowsWindow{
+			HiddenOnTaskbar: true,
+			DisableMenu: true,
+			// The popup already draws its rounded corners in CSS. Native DWM
+			// decorations add a second border/shadow outside the content.
+			DisableFramelessWindowDecorations: true,
+		},
 	})
 	service.setWindow(window)
 	window.OnWindowEvent(events.Windows.WebViewNavigationCompleted, func(_ *application.WindowEvent) {
